@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a2340">
+<title>Meus Gastos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+
+  :root {
+    --bg: #0f1623;
+    --surface: #1a2340;
+    --surface2: #222d4a;
+    --accent: #4f8ef7;
+    --accent2: #f7c94f;
+    --danger: #f75f4f;
+    --success: #4ff79e;
+    --text: #e8edf8;
+    --muted: #7a8ab0;
+    --radius: 14px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid #ffffff10;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+
+  .mes-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+  }
+  .mes-nav button {
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .mes-nav button:hover { background: var(--accent); }
+  #mes-label {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    min-width: 120px;
+    text-align: center;
+  }
+
+  /* RESUMO */
+  .resumo {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 16px;
+  }
+  .card-resumo {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .card-resumo .valor {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .card-resumo .label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .valor.receita { color: var(--success); }
+  .valor.gasto { color: var(--danger); }
+  .valor.saldo { color: var(--accent2); }
+
+  /* BARRA DE PROGRESSO */
+  .orcamento-bar {
+    margin: 0 16px 16px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .orc-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .orc-header strong { color: var(--text); font-size: 13px; }
+  .bar-track {
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s ease, background 0.4s;
+    background: var(--accent);
+  }
+  .bar-fill.alerta { background: var(--accent2); }
+  .bar-fill.perigo { background: var(--danger); }
+
+  /* ABAS */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 16px;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.ativo {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* SEÇÕES */
+  .section { display: none; padding: 0 16px; }
+  .section.ativo { display: block; }
+
+  /* FORMULÁRIO */
+  .form-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .form-card h3 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    margin-bottom: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 11px;
+  }
+  .form-row { margin-bottom: 12px; }
+  .form-row label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .form-row input, .form-row select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    padding: 11px 13px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-row input:focus, .form-row select:focus {
+    border-color: var(--accent);
+  }
+  .form-row select option { background: var(--surface2); }
+
+  .tipo-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .tipo-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid var(--surface2);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tipo-btn.ativo-receita { border-color: var(--success); color: var(--success); background: #4ff79e15; }
+  .tipo-btn.ativo-gasto { border-color: var(--danger); color: var(--danger); background: #f75f4f15; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 4px;
+  }
+  .btn-primary:active { opacity: 0.8; }
+
+  /* LISTA DE LANÇAMENTOS */
+  .lista-title {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+  .lancamento-item {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .lanc-icone {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .lanc-info { flex: 1; min-width: 0; }
+  .lanc-desc {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lanc-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .lanc-valor {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .lanc-valor.receita { color: var(--success); }
+  .lanc-valor.gasto { color: var(--danger); }
+  .lanc-del {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    flex-shrink: 0;
+    transition: color 0.2s;
+  }
+  .lanc-del:hover { color: var(--danger); }
+
+  .vazio {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .vazio .emoji { font-size: 36px; margin-bottom: 10px; }
+
+  /* CATEGORIAS (RELATÓRIO) */
+  .cat-item {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+  }
+  .cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .cat-nome {
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cat-valor {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--danger);
+    font-size: 14px;
+  }
+  .cat-pct {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .cat-bar {
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: var(--accent);
+  }
+
+  /* ORÇAMENTO CONFIG */
+  .orc-config {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .orc-config h3 {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .orc-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .orc-row .form-row { flex: 1; margin-bottom: 0; }
+  .orc-row .btn-primary { width: auto; padding: 11px 18px; margin-top: 0; font-size: 13px; }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid #ffffff10;
+    display: flex;
+    padding: 8px 16px 12px;
+    z-index: 200;
+  }
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 0;
+    color: var(--muted);
+    font-size: 10px;
+    font-family: var(--font-body);
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+  .nav-btn .icon { font-size: 20px; }
+  .nav-btn.ativo { color: var(--accent); }
+
+  /* FAB */
+  .fab {
+    position: fixed;
+    bottom: 72px;
+    right: 20px;
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    font-size: 26px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px #4f8ef750;
+    z-index: 150;
+    transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.92); }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 300;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000090;
+    z-index: 400;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px 40px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--surface2);
+    border-radius: 99px;
+    margin: 0 auto 18px;
+  }
+  .modal h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    margin-bottom: 18px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">Meus<span>Gastos</span></div>
+    <div style="font-size:12px;color:var(--muted)" id="total-count"></div>
+  </div>
+  <div class="mes-nav">
+    <button onclick="mudarMes(-1)">‹</button>
+    <span id="mes-label"></span>
+    <button onclick="mudarMes(1)">›</button>
+  </div>
+</header>
+
+<!-- RESUMO -->
+<div class="resumo">
+  <div class="card-resumo">
+    <div class="valor receita" id="total-receita">R$ 0</div>
+    <div class="label">Receitas</div>
+  </div>
+  <div class="card-resumo">
+    <div class="valor gasto" id="total-gasto">R$ 0</div>
+    <div class="label">Gastos</div>
+  </div>
+  <div class="card-resumo">
+    <div class="valor saldo" id="total-saldo">R$ 0</div>
+    <div class="label">Saldo</div>
+  </div>
+</div>
+
+<!-- BARRA ORÇAMENTO -->
+<div class="orcamento-bar" id="orc-bar-container">
+  <div class="orc-header">
+    <span>Orçamento mensal</span>
+    <strong id="orc-label">R$ 0 / R$ 0</strong>
+  </div>
+  <div class="bar-track">
+    <div class="bar-fill" id="orc-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- ABAS -->
+<div class="tabs">
+  <button class="tab ativo" onclick="trocarAba('lancamentos', this)">💰 Lançamentos</button>
+  <button class="tab" onclick="trocarAba('relatorio', this)">📊 Relatório</button>
+  <button class="tab" onclick="trocarAba('config', this)">⚙️ Config</button>
+</div>
+
+<!-- ABA: LANÇAMENTOS -->
+<div class="section ativo" id="aba-lancamentos">
+  <div class="lista-title">Histórico do mês</div>
+  <div id="lista-lancamentos"></div>
+</div>
+
+<!-- ABA: RELATÓRIO -->
+<div class="section" id="aba-relatorio">
+  <div id="relatorio-content"></div>
+</div>
+
+<!-- ABA: CONFIG -->
+<div class="section" id="aba-config">
+  <div class="orc-config">
+    <h3>💼 Orçamento mensal</h3>
+    <div class="orc-row">
+      <div class="form-row">
+        <label>Valor do orçamento (R$)</label>
+        <input type="number" id="input-orcamento" placeholder="Ex: 3000">
+      </div>
+      <button class="btn-primary" onclick="salvarOrcamento()">Salvar</button>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <h3>📂 Categorias personalizadas</h3>
+    <div class="form-row">
+      <label>Nova categoria</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="input-nova-cat" placeholder="Ex: Lazer" style="flex:1">
+        <input type="text" id="input-cat-emoji" placeholder="🎉" style="width:60px;text-align:center">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="adicionarCategoria()" style="margin-top:8px">Adicionar</button>
+    <div id="lista-cats" style="margin-top:14px"></div>
+  </div>
+
+  <div class="form-card" style="border: 1px solid #f75f4f30;">
+    <h3 style="color:var(--danger)">⚠️ Dados</h3>
+    <button onclick="exportarCSV()" class="btn-primary" style="background:var(--surface2);margin-bottom:10px">📥 Exportar CSV</button>
+    <button onclick="limparDados()" class="btn-primary" style="background:#f75f4f20;color:var(--danger);border:1px solid var(--danger)">🗑️ Limpar todos os dados</button>
+  </div>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="abrirModal()">＋</button>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn ativo" onclick="trocarAba('lancamentos', this, true)" id="nav-lancamentos">
+    <span class="icon">💰</span>Lançamentos
+  </button>
+  <button class="nav-btn" onclick="trocarAba('relatorio', this, true)" id="nav-relatorio">
+    <span class="icon">📊</span>Relatório
+  </button>
+  <button class="nav-btn" onclick="trocarAba('config', this, true)" id="nav-config">
+    <span class="icon">⚙️</span>Config
+  </button>
+</div>
+
+<!-- MODAL NOVO LANÇAMENTO -->
+<div class="modal-overlay" id="modal" onclick="fecharModalFora(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Novo Lançamento</h2>
+
+    <div class="tipo-toggle">
+      <button class="tipo-btn ativo-gasto" id="btn-gasto" onclick="setTipo('gasto')">📤 Gasto</button>
+      <button class="tipo-btn" id="btn-receita" onclick="setTipo('receita')">📥 Receita</button>
+    </div>
+
+    <div class="form-row">
+      <label>Descrição</label>
+      <input type="text" id="form-desc" placeholder="Ex: Mercado">
+    </div>
+    <div class="form-row">
+      <label>Valor (R$)</label>
+      <input type="number" id="form-valor" placeholder="0,00" inputmode="decimal">
+    </div>
+    <div class="form-row">
+      <label>Categoria</label>
+      <select id="form-cat"></select>
+    </div>
+    <div class="form-row">
+      <label>Data</label>
+      <input type="date" id="form-data">
+    </div>
+
+    <button class="btn-primary" onclick="salvarLancamento()">Salvar lançamento</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+const CATS_PADRAO = [
+  { nome: 'Alimentação', emoji: '🛒' },
+  { nome: 'Transporte', emoji: '🚌' },
+  { nome: 'Saúde', emoji: '💊' },
+  { nome: 'Educação', emoji: '📚' },
+  { nome: 'Moradia', emoji: '🏠' },
+  { nome: 'Lazer', emoji: '🎉' },
+  { nome: 'Vestuário', emoji: '👕' },
+  { nome: 'Outros', emoji: '📦' },
+];
+
+let state = {
+  lancamentos: [],
+  categorias: [...CATS_PADRAO],
+  orcamento: 0,
+  mesAtual: new Date().getMonth(),
+  anoAtual: new Date().getFullYear(),
+  tipoForm: 'gasto'
+};
+
+function carregar() {
+  const s = localStorage.getItem('meusgastos_v1');
+  if (s) {
+    try {
+      const d = JSON.parse(s);
+      state = { ...state, ...d };
+    } catch(e) {}
+  }
+}
+
+function salvar() {
+  localStorage.setItem('meusgastos_v1', JSON.stringify(state));
+}
+
+function fmt(v) {
+  return 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function lancamentosMes() {
+  return state.lancamentos.filter(l => {
+    const d = new Date(l.data + 'T00:00:00');
+    return d.getMonth() === state.mesAtual && d.getFullYear() === state.anoAtual;
+  });
+}
+
+function render() {
+  // Header
+  document.getElementById('mes-label').textContent = MESES[state.mesAtual] + ' ' + state.anoAtual;
+
+  const itens = lancamentosMes();
+  const receitas = itens.filter(l => l.tipo === 'receita').reduce((s,l) => s + l.valor, 0);
+  const gastos = itens.filter(l => l.tipo === 'gasto').reduce((s,l) => s + l.valor, 0);
+  const saldo = receitas - gastos;
+
+  document.getElementById('total-receita').textContent = fmt(receitas);
+  document.getElementById('total-gasto').textContent = fmt(gastos);
+  document.getElementById('total-saldo').textContent = fmt(saldo);
+  document.getElementById('total-count').textContent = itens.length + ' lançamento' + (itens.length !== 1 ? 's' : '');
+
+  // Barra orçamento
+  const pct = state.orcamento > 0 ? Math.min((gastos / state.orcamento) * 100, 100) : 0;
+  const fill = document.getElementById('orc-fill');
+  fill.style.width = pct + '%';
+  fill.className = 'bar-fill' + (pct >= 100 ? ' perigo' : pct >= 75 ? ' alerta' : '');
+  document.getElementById('orc-label').textContent = fmt(gastos) + ' / ' + fmt(state.orcamento);
+
+  // Lista lançamentos
+  const lista = document.getElementById('lista-lancamentos');
+  const ordenados = [...itens].sort((a,b) => new Date(b.data) - new Date(a.data));
+  if (ordenados.length === 0) {
+    lista.innerHTML = '<div class="vazio"><div class="emoji">💸</div>Nenhum lançamento neste mês.<br>Toque no + para adicionar.</div>';
+  } else {
+    lista.innerHTML = ordenados.map(l => {
+      const cat = state.categorias.find(c => c.nome === l.categoria) || { emoji: '📦' };
+      const corBg = l.tipo === 'receita' ? '#4ff79e20' : '#f75f4f20';
+      const dataFmt = new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR');
+      return `
+        <div class="lancamento-item">
+          <div class="lanc-icone" style="background:${corBg}">${cat.emoji}</div>
+          <div class="lanc-info">
+            <div class="lanc-desc">${l.descricao}</div>
+            <div class="lanc-meta">${l.categoria} • ${dataFmt}</div>
+          </div>
+          <div class="lanc-valor ${l.tipo}">${l.tipo === 'receita' ? '+' : '-'}${fmt(l.valor)}</div>
+          <button class="lanc-del" onclick="excluir('${l.id}')">✕</button>
+        </div>`;
+    }).join('');
+  }
+
+  // Relatório
+  const relContent = document.getElementById('relatorio-content');
+  const catGastos = {};
+  itens.filter(l => l.tipo === 'gasto').forEach(l => {
+    catGastos[l.categoria] = (catGastos[l.categoria] || 0) + l.valor;
+  });
+  const totalGasto = Object.values(catGastos).reduce((s,v) => s+v, 0);
+  const sorted = Object.entries(catGastos).sort((a,b) => b[1]-a[1]);
+
+  if (sorted.length === 0) {
+    relContent.innerHTML = '<div class="vazio"><div class="emoji">📊</div>Sem gastos registrados neste mês.</div>';
+  } else {
+    relContent.innerHTML = `
+      <div class="lista-title" style="margin-bottom:12px">Gastos por categoria</div>
+      ${sorted.map(([nome, val]) => {
+        const cat = state.categorias.find(c => c.nome === nome) || { emoji: '📦' };
+        const pct = totalGasto > 0 ? ((val/totalGasto)*100).toFixed(1) : 0;
+        return `
+          <div class="cat-item">
+            <div class="cat-header">
+              <div class="cat-nome">${cat.emoji} ${nome}</div>
+              <div>
+                <span class="cat-valor">${fmt(val)}</span>
+                <span class="cat-pct"> ${pct}%</span>
+              </div>
+            </div>
+            <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+          </div>`;
+      }).join('')}
+    `;
+  }
+
+  // Config: lista cats
+  const listaCats = document.getElementById('lista-cats');
+  listaCats.innerHTML = state.categorias.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #ffffff08">
+      <span style="font-size:18px">${c.emoji}</span>
+      <span style="flex:1;font-size:14px">${c.nome}</span>
+      ${i >= CATS_PADRAO.length ? `<button onclick="removerCategoria(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">✕</button>` : ''}
+    </div>
+  `).join('');
+
+  // Orçamento input
+  document.getElementById('input-orcamento').value = state.orcamento || '';
+
+  // Select categoria
+  const sel = document.getElementById('form-cat');
+  sel.innerHTML = state.categorias.map(c => `<option value="${c.nome}">${c.emoji} ${c.nome}</option>`).join('');
+}
+
+function mudarMes(delta) {
+  state.mesAtual += delta;
+  if (state.mesAtual > 11) { state.mesAtual = 0; state.anoAtual++; }
+  if (state.mesAtual < 0) { state.mesAtual = 11; state.anoAtual--; }
+  render();
+}
+
+function trocarAba(aba, btn, fromNav = false) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('ativo'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
+  document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('ativo'));
+  document.getElementById('aba-' + aba).classList.add('ativo');
+  if (btn) btn.classList.add('ativo');
+  document.getElementById('nav-' + aba)?.classList.add('ativo');
+  render();
+}
+
+function setTipo(tipo) {
+  state.tipoForm = tipo;
+  document.getElementById('btn-gasto').className = 'tipo-btn' + (tipo === 'gasto' ? ' ativo-gasto' : '');
+  document.getElementById('btn-receita').className = 'tipo-btn' + (tipo === 'receita' ? ' ativo-receita' : '');
+}
+
+function abrirModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('form-desc').value = '';
+  document.getElementById('form-valor').value = '';
+  document.getElementById('form-data').value = new Date().toISOString().split('T')[0];
+  setTipo('gasto');
+  setTimeout(() => document.getElementById('form-desc').focus(), 100);
+}
+
+function fecharModalFora(e) {
+  if (e.target.id === 'modal') fecharModal();
+}
+
+function fecharModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function salvarLancamento() {
+  const desc = document.getElementById('form-desc').value.trim();
+  const valor = parseFloat(document.getElementById('form-valor').value);
+  const cat = document.getElementById('form-cat').value;
+  const data = document.getElementById('form-data').value;
+
+  if (!desc) { toast('Digite a descrição'); return; }
+  if (!valor || valor <= 0) { toast('Digite um valor válido'); return; }
+  if (!data) { toast('Selecione a data'); return; }
+
+  state.lancamentos.push({
+    id: Date.now().toString(),
+    descricao: desc,
+    valor,
+    tipo: state.tipoForm,
+    categoria: cat,
+    data
+  });
+
+  salvar();
+  fecharModal();
+  render();
+  toast(state.tipoForm === 'gasto' ? '💸 Gasto registrado!' : '💰 Receita registrada!');
+}
+
+function excluir(id) {
+  if (!confirm('Excluir este lançamento?')) return;
+  state.lancamentos = state.lancamentos.filter(l => l.id !== id);
+  salvar();
+  render();
+  toast('Lançamento removido');
+}
+
+function salvarOrcamento() {
+  const v = parseFloat(document.getElementById('input-orcamento').value);
+  if (!v || v <= 0) { toast('Digite um valor válido'); return; }
+  state.orcamento = v;
+  salvar();
+  render();
+  toast('✅ Orçamento salvo!');
+}
+
+function adicionarCategoria() {
+  const nome = document.getElementById('input-nova-cat').value.trim();
+  const emoji = document.getElementById('input-cat-emoji').value.trim() || '📦';
+  if (!nome) { toast('Digite o nome da categoria'); return; }
+  if (state.categorias.find(c => c.nome.toLowerCase() === nome.toLowerCase())) {
+    toast('Categoria já existe'); return;
+  }
+  state.categorias.push({ nome, emoji });
+  document.getElementById('input-nova-cat').value = '';
+  document.getElementById('input-cat-emoji').value = '';
+  salvar();
+  render();
+  toast('✅ Categoria adicionada!');
+}
+
+function removerCategoria(i) {
+  if (!confirm('Remover categoria?')) return;
+  state.categorias.splice(i, 1);
+  salvar();
+  render();
+}
+
+function exportarCSV() {
+  const itens = lancamentosMes();
+  if (!itens.length) { toast('Sem lançamentos para exportar'); return; }
+  const header = 'Data,Descrição,Tipo,Categoria,Valor\n';
+  const rows = itens.map(l => `${l.data},${l.descricao},${l.tipo},${l.categoria},${l.valor}`).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `gastos_${MESES[state.mesAtual]}_${state.anoAtual}.csv`;
+  a.click();
+  toast('📥 CSV exportado!');
+}
+
+function limparDados() {
+  if (!confirm('Isso vai apagar TODOS os lançamentos. Tem certeza?')) return;
+  if (!confirm('Última confirmação: apagar tudo?')) return;
+  state.lancamentos = [];
+  salvar();
+  render();
+  toast('Dados apagados');
+}
+
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+carregar();
+render();
+</script>
+</body>
+</html>
