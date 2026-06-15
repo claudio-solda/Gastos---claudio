@@ -641,6 +641,8 @@ const CATS_PADRAO = [
   { nome: 'Lazer', emoji: '🎉' },
   { nome: 'Vestuário', emoji: '👕' },
   { nome: 'Outros', emoji: '📦' },
+  { nome: 'Empréstimo', emoji: '💳' },
+  { nome: 'Dívidas', emoji: '📋' },
 ];
 
 let state = {
@@ -673,13 +675,28 @@ function fmt(v) {
 function lancamentosMes() {
   return state.lancamentos.filter(l => {
     const d = new Date(l.data + 'T00:00:00');
-    return d.getMonth() === state.mesAtual && d.getFullYear() === state.anoAtual;
+    const dia = d.getDate();
+    const mes = d.getMonth();
+    const ano = d.getFullYear();
+    // Período: dia 20 do mês atual até dia 5 do próximo mês
+    let mesFim = state.mesAtual + 1;
+    let anoFim = state.anoAtual;
+    if (mesFim > 11) { mesFim = 0; anoFim++; }
+    const inicio = new Date(state.anoAtual, state.mesAtual, 20);
+    const fim = new Date(anoFim, mesFim, 5);
+    return d >= inicio && d <= fim;
   });
 }
 
 function render() {
   // Header
-  document.getElementById('mes-label').textContent = MESES[state.mesAtual] + ' ' + state.anoAtual;
+  // Calcula período 20 ao 5
+const mesInicio = state.mesAtual;
+const anoInicio = state.anoAtual;
+let mesFim = state.mesAtual + 1;
+let anoFim = state.anoAtual;
+if (mesFim > 11) { mesFim = 0; anoFim++; }
+document.getElementById('mes-label').textContent = '20 ' + MESES[mesInicio].substring(0,3) + ' - 05 ' + MESES[mesFim].substring(0,3) + ' ' + anoFim;
 
   const itens = lancamentosMes();
   const receitas = itens.filter(l => l.tipo === 'receita').reduce((s,l) => s + l.valor, 0);
