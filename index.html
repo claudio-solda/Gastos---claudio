@@ -725,13 +725,17 @@ document.getElementById('mes-label').textContent = '20 ' + MESES[mesInicio].subs
       const cat = state.categorias.find(c => c.nome === l.categoria) || { emoji: '📦' };
       const corBg = l.tipo === 'receita' ? '#4ff79e20' : '#f75f4f20';
       const dataFmt = new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR');
-      return `
-        <div class="lancamento-item">
+      const pagoBadge = l.tipo === 'gasto' 
+            ? `<button onclick="togglePago('${l.id}')" style="background:${l.pago ? '#4ff79e20' : '#f7c94f20'};border:1.5px solid ${l.pago ? '#4ff79e' : '#f7c94f'};border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;color:${l.pago ? '#4ff79e' : '#f7c94f'};cursor:pointer;flex-shrink:0">${l.pago ? '✅ Pago' : '⏳ Pendente'}</button>`
+            : '';
+          return `
+        <div class="lancamento-item" style="${l.pago ? 'opacity:0.75' : ''}">
           <div class="lanc-icone" style="background:${corBg}">${cat.emoji}</div>
           <div class="lanc-info">
-            <div class="lanc-desc">${l.descricao}</div>
+            <div class="lanc-desc" style="${l.pago ? 'text-decoration:line-through' : ''}">${l.descricao}</div>
             <div class="lanc-meta">${l.categoria} • ${dataFmt}</div>
           </div>
+          ${pagoBadge}
           <div class="lanc-valor ${l.tipo}">${l.tipo === 'receita' ? '+' : '-'}${fmt(l.valor)}</div>
           <button class="lanc-del" onclick="excluir('${l.id}')">✕</button>
         </div>`;
@@ -844,13 +848,21 @@ function salvarLancamento() {
     valor,
     tipo: state.tipoForm,
     categoria: cat,
-    data
+    data,
+    pago: false
   });
 
   salvar();
   fecharModal();
   render();
   toast(state.tipoForm === 'gasto' ? '💸 Gasto registrado!' : '💰 Receita registrada!');
+}
+
+function togglePago(id) {
+  const lanc = state.lancamentos.find(l => l.id === id);
+  if (lanc) { lanc.pago = !lanc.pago; }
+  salvar();
+  render();
 }
 
 function excluir(id) {
