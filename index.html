@@ -530,6 +530,7 @@
 <!-- ABAS -->
 <div class="tabs">
   <button class="tab ativo" onclick="trocarAba('lancamentos', this)">💰 Lançamentos</button>
+  <button class="tab" onclick="trocarAba('fixas', this)">📌 Fixas</button>
   <button class="tab" onclick="trocarAba('relatorio', this)">📊 Relatório</button>
   <button class="tab" onclick="trocarAba('config', this)">⚙️ Config</button>
 </div>
@@ -541,6 +542,18 @@
 </div>
 
 <!-- ABA: RELATÓRIO -->
+<div class="section" id="aba-fixas">
+  <div class="form-card">
+    <h3>📌 Nova Conta Fixa</h3>
+    <div class="form-row"><label>Descrição</label><input type="text" id="fixa-desc" placeholder="Ex: Internet"></div>
+    <div class="form-row"><label>Valor (R$)</label><input type="number" id="fixa-valor" placeholder="0,00" inputmode="decimal"></div>
+    <div class="form-row"><label>Categoria</label><select id="fixa-cat"></select></div>
+    <div class="form-row"><label>Dia de vencimento</label><input type="number" id="fixa-dia" placeholder="Ex: 20" min="1" max="31"></div>
+    <button class="btn-primary" onclick="salvarContaFixa()">Adicionar conta fixa</button>
+  </div>
+  <div class="lista-title">Contas fixas cadastradas</div>
+  <div id="lista-fixas"></div>
+</div>
 <div class="section" id="aba-relatorio">
   <div id="relatorio-content"></div>
 </div>
@@ -646,6 +659,7 @@ const CATS_PADRAO = [
 ];
 
 let state = {
+  contasFixas: [],
   lancamentos: [],
   categorias: [...CATS_PADRAO],
   orcamento: 0,
@@ -935,7 +949,67 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
+function salvarContaFixa() {
+  const desc = document.getElementById('fixa-desc').value.trim();
+  const valor = parseFloat(document.getElementById('fixa-valor').value);
+  const cat = document.getElementById('fixa-cat').value;
+  const dia = parseInt(document.getElementById('fixa-dia').value);
+  if (!desc) { toast('Digite a descrição'); return; }
+  if (!valor || valor <= 0) { toast('Digite um valor válido'); return; }
+  if (!dia || dia < 1 || dia > 31) { toast('Digite um dia válido'); return; }
+  state.contasFixas.push({ id: Date.now().toString(), descricao: desc, valor, categoria: cat, dia });
+  document.getElementById('fixa-desc').value = '';
+  document.getElementById('fixa-valor').value = '';
+  document.getElementById('fixa-dia').value = '';
+  salvar();
+  gerarContasFixasMes();
+  render();
+  toast('✅ Conta fixa adicionada!');
+}
+
+function excluirContaFixa(id) {
+  if (!confirm('Remover conta fixa?')) return;
+  state.contasFixas = state.contasFixas.filter(f => f.id !== id);
+  salvar();
+  render();
+  toast('Conta fixa removida');
+}
+
+function gerarContasFixasMes() {
+  // Gera lançamentos pendentes para o mês atual se ainda não existirem
+  const mesKey = state.anoAtual + '-' + state.mesAtual;
+  if (!state.mesesGerados) state.mesesGerados = [];
+  if (state.mesesGerados.includes(mesKey)) return;
+  
+  state.contasFixas.forEach(fixa => {
+    const ano = fixa.dia >= 20 ? state.anoAtual : (state.mesAtual === 11 ? state.anoAtual + 1 : state.anoAtual);
+    const mes = fixa.dia >= 20 ? state.mesAtual : (state.mesAtual === 11 ? 0 : state.mesAtual + 1);
+    const dataStr = ano + '-' + String(mes+1).padStart(2,'0') + '-' + String(fixa.dia).padStart(2,'0');
+    
+    // Verifica se já existe lançamento desta conta fixa neste período
+    const jaExiste = state.lancamentos.some(l => 
+      l.fixaId === fixa.id && l.data === dataStr
+    );
+    if (!jaExiste) {
+      state.lancamentos.push({
+        id: Date.now().toString() + Math.random(),
+        descricao: fixa.descricao,
+        valor: fixa.valor,
+        tipo: 'gasto',
+        categoria: fixa.categoria,
+        data: dataStr,
+        pago: false,
+        fixaId: fixa.id
+      });
+    }
+  });
+  
+  state.mesesGerados.push(mesKey);
+  salvar();
+}
+
 carregar();
+gerarContasFixasMes();
 render();
 </script>
 </body>
