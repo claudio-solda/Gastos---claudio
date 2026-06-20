@@ -828,6 +828,26 @@ document.getElementById('mes-label').textContent = '20 ' + MESES[mesInicio].subs
     `;
   }
 
+  // Lista fixas
+  const listaFixas = document.getElementById('lista-fixas');
+  if (state.contasFixas.length === 0) {
+    listaFixas.innerHTML = '<div class="vazio" style="padding:16px;text-align:center;color:var(--muted);font-size:14px">Nenhuma conta fixa cadastrada.</div>';
+  } else {
+    listaFixas.innerHTML = state.contasFixas.map(f => {
+      const cat = state.categorias.find(c => c.nome === f.categoria) || { emoji: '📦' };
+      return `
+        <div class="lancamento-item">
+          <div class="lanc-icone" style="background:#f7c94f20">${cat.emoji}</div>
+          <div class="lanc-info">
+            <div class="lanc-desc">${f.descricao}</div>
+            <div class="lanc-meta">${f.categoria} • Vence dia ${f.dia}</div>
+          </div>
+          <div class="lanc-valor gasto">${fmt(f.valor)}</div>
+          <button class="lanc-del" onclick="excluirContaFixa('${f.id}')">✕</button>
+        </div>`;
+    }).join('');
+  }
+
   // Config: lista cats
   const listaCats = document.getElementById('lista-cats');
   listaCats.innerHTML = state.categorias.map((c, i) => `
