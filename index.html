@@ -678,7 +678,9 @@
       <option value="Dívidas">📋 Dívidas</option>
       <option value="Móveis">🛋️ Móveis</option>
     </select></div>
-    <div class="form-row"><label>Dia de vencimento</label><input type="number" id="fixa-dia" placeholder="Ex: 20" min="1" max="31"></div>
+    <div class="form-row"><label>Dia de vencimento</label><input type="number" id="fixa-dia" placeholder="Ex: 5" min="1" max="31"></div>
+    <div class="form-row"><label>Parcelas (deixe em branco se for permanente)</label><input type="number" id="fixa-parcelas" placeholder="Ex: 12" min="1" oninput="toggleMesInicio()"></div>
+    <div class="form-row" id="row-mes-inicio" style="display:none"><label>Mês e ano da 1ª parcela</label><input type="month" id="fixa-mes-inicio"></div>
     <button class="btn-primary" onclick="salvarContaFixa()">Adicionar conta fixa</button>
   </div>
   <div class="lista-title">Contas fixas cadastradas</div>
@@ -963,7 +965,6 @@ function render() {
   } else {
     listaFixas.innerHTML = state.contasFixas.map(f => {
       const cat = state.categorias.find(c => c.nome === f.categoria) || { emoji: '📦' };
-      // Busca o lançamento desta fixa no período atual
       const lanc = getLancamentoFixaMes(f.id);
       let badgeHtml = '';
       if (lanc) {
@@ -971,14 +972,22 @@ function render() {
         const statusTexto = lanc.pago ? '✅ Pago' : '⏳ A Vencer';
         badgeHtml = `<button onclick="togglePagoFixa('${lanc.id}')" class="badge-status ${statusClass}">${statusTexto}</button>`;
       } else {
-        badgeHtml = `<span style="font-size:11px;color:var(--muted);flex-shrink:0">Sem lançamento</span>`;
+        badgeHtml = `<span style="font-size:11px;color:var(--muted);flex-shrink:0">Fora do período</span>`;
+      }
+      // Info de parcelas
+      let parcelaInfo = `Vence dia ${f.dia}`;
+      if (f.parcelas && f.mesInicio) {
+        const [anoInicio, mesInicio] = f.mesInicio.split('-').map(Number);
+        const diffMeses = (state.anoAtual - anoInicio) * 12 + (state.mesAtual - (mesInicio - 1));
+        const parcelaAtual = diffMeses + 1;
+        parcelaInfo = `Vence dia ${f.dia} • ${parcelaAtual}/${f.parcelas}x`;
       }
       return `
         <div class="lancamento-item">
           <div class="lanc-icone" style="background:#f7c94f20">${cat.emoji}</div>
           <div class="lanc-info">
             <div class="lanc-desc">${f.descricao}</div>
-            <div class="lanc-meta">${f.categoria} • Vence dia ${f.dia}</div>
+            <div class="lanc-meta">${f.categoria} • ${parcelaInfo}</div>
           </div>
           ${badgeHtml}
           <div class="lanc-valor gasto">${fmt(f.valor)}</div>
@@ -1156,18 +1165,48 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
+function toggleMesInicio() {
+  const parcelas = document.getElementById('fixa-parcelas').value;
+  const row = document.getElementById('row-mes-inicio');
+  row.style.display = parcelas > 0 ? 'block' : 'none';
+  if (parcelas > 0 && !document.getElementById('fixa-mes-inicio').value) {
+    const hoje = new Date();
+    document.getElementById('fixa-mes-inicio').value = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  }
+}
+
 function salvarContaFixa() {
   const desc = document.getElementById('fixa-desc').value.trim();
   const valor = parseFloat(document.getElementById('fixa-valor').value);
   const cat = document.getElementById('fixa-cat').value;
   const dia = parseInt(document.getElementById('fixa-dia').value);
+  const parcelasInput = document.getElementById('fixa-parcelas').value;
+  const parcelas = parcelasInput ? parseInt(parcelasInput) : null;
+  const mesInicio = document.getElementById('fixa-mes-inicio').value;
+
   if (!desc) { toast('Digite a descrição'); return; }
   if (!valor || valor <= 0) { toast('Digite um valor válido'); return; }
   if (!dia || dia < 1 || dia > 31) { toast('Digite um dia válido'); return; }
-  state.contasFixas.push({ id: Date.now().toString(), descricao: desc, valor, categoria: cat, dia });
+  if (parcelas && !mesInicio) { toast('Informe o mês da 1ª parcela'); return; }
+
+  const novaFixa = {
+    id: Date.now().toString(),
+    descricao: desc,
+    valor,
+    categoria: cat,
+    dia,
+    parcelas: parcelas || null,
+    parcelaAtual: parcelas ? 1 : null,
+    mesInicio: mesInicio || null
+  };
+
+  state.contasFixas.push(novaFixa);
   document.getElementById('fixa-desc').value = '';
   document.getElementById('fixa-valor').value = '';
   document.getElementById('fixa-dia').value = '';
+  document.getElementById('fixa-parcelas').value = '';
+  document.getElementById('fixa-mes-inicio').value = '';
+  document.getElementById('row-mes-inicio').style.display = 'none';
   salvar();
   gerarContasFixasMes();
   render();
@@ -1184,12 +1223,40 @@ function excluirContaFixa(id) {
   toast('Conta fixa removida');
 }
 
+function getParcela(fixa) {
+  // Calcula qual parcela corresponde ao mes/ano atual
+  if (!fixa.parcelas || !fixa.mesInicio) return null;
+  const [anoInicio, mesInicio] = fixa.mesInicio.split('-').map(Number);
+  const diffMeses = (state.anoAtual - anoInicio) * 12 + (state.mesAtual - (mesInicio - 1));
+  if (diffMeses < 0 || diffMeses >= fixa.parcelas) return null;
+  return diffMeses + 1; // parcela atual (1-based)
+}
+
 function gerarContasFixasMes() {
   const mesKey = state.anoAtual + '-' + state.mesAtual;
   if (!state.mesesGerados) state.mesesGerados = [];
   if (state.mesesGerados.includes(mesKey)) return;
 
+  // Remove fixas que terminaram
+  state.contasFixas = state.contasFixas.filter(fixa => {
+    if (!fixa.parcelas || !fixa.mesInicio) return true;
+    const [anoInicio, mesInicio] = fixa.mesInicio.split('-').map(Number);
+    const totalMeses = fixa.parcelas;
+    const anoFim = anoInicio + Math.floor((mesInicio - 1 + totalMeses) / 12);
+    const mesFim = (mesInicio - 1 + totalMeses) % 12;
+    if (state.anoAtual > anoFim || (state.anoAtual === anoFim && state.mesAtual >= mesFim)) {
+      return false; // remove conta que terminou
+    }
+    return true;
+  });
+
   state.contasFixas.forEach(fixa => {
+    // Se tem parcelas, verifica se este mês está no período
+    if (fixa.parcelas && fixa.mesInicio) {
+      const parcela = getParcela(fixa);
+      if (!parcela) return; // mês fora do período
+    }
+
     const ano = fixa.dia >= 20 ? state.anoAtual : (state.mesAtual === 11 ? state.anoAtual + 1 : state.anoAtual);
     const mes = fixa.dia >= 20 ? state.mesAtual : (state.mesAtual === 11 ? 0 : state.mesAtual + 1);
     const dataStr = ano + '-' + String(mes+1).padStart(2,'0') + '-' + String(fixa.dia).padStart(2,'0');
@@ -1198,15 +1265,19 @@ function gerarContasFixasMes() {
       l.fixaId === fixa.id && l.data === dataStr
     );
     if (!jaExiste) {
+      const parcela = fixa.parcelas ? getParcela(fixa) : null;
+      const descricao = parcela ? fixa.descricao + ' (' + parcela + '/' + fixa.parcelas + 'x)' : fixa.descricao;
       state.lancamentos.push({
         id: Date.now().toString() + Math.random(),
-        descricao: fixa.descricao,
+        descricao,
         valor: fixa.valor,
         tipo: 'gasto',
         categoria: fixa.categoria,
         data: dataStr,
         pago: false,
-        fixaId: fixa.id
+        fixaId: fixa.id,
+        parcela: parcela,
+        totalParcelas: fixa.parcelas || null
       });
     }
   });
