@@ -784,7 +784,6 @@ function verificarSenha() {
   const erro = document.getElementById('senha-erro');
   if (input.value === SENHA_CORRETA) {
     document.getElementById('tela-senha').classList.add('hide');
-    localStorage.setItem('mg_auth', '1');
   } else {
     input.classList.add('erro');
     erro.classList.add('show');
@@ -794,11 +793,7 @@ function verificarSenha() {
 }
 
 function checarSenha() {
-  if (localStorage.getItem('mg_auth') !== '1') {
-    document.getElementById('tela-senha').classList.remove('hide');
-  } else {
-    document.getElementById('tela-senha').classList.add('hide');
-  }
+  document.getElementById('tela-senha').classList.remove('hide');
 }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
