@@ -738,6 +738,18 @@
     display: none;
   }
   .senha-erro.show { display: block; }
+
+  /* MODAL TROCAR SENHA */
+  #modal-trocar-senha {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000090;
+    z-index: 500;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  #modal-trocar-senha.open { display: flex; }
 </style>
 </head>
 <body>
@@ -750,6 +762,28 @@
     <input type="password" class="senha-input" id="senha-input" placeholder="••••••••" onkeydown="if(event.key==='Enter') verificarSenha()">
     <div class="senha-erro" id="senha-erro">Senha incorreta. Tente novamente.</div>
     <button class="btn-primary" onclick="verificarSenha()">Entrar</button>
+  </div>
+</div>
+
+<!-- MODAL TROCAR SENHA -->
+<div id="modal-trocar-senha" onclick="fecharModalSenha(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🔐 Trocar Senha de Acesso</h2>
+    <div class="form-row">
+      <label>Senha Master</label>
+      <input type="password" id="input-master" placeholder="••••••••">
+    </div>
+    <div class="form-row">
+      <label>Nova Senha de Acesso</label>
+      <input type="password" id="input-nova-senha" placeholder="Nova senha">
+    </div>
+    <div class="form-row">
+      <label>Confirmar Nova Senha</label>
+      <input type="password" id="input-confirmar-senha" placeholder="Repita a nova senha">
+    </div>
+    <div class="senha-erro" id="erro-trocar-senha" style="margin-bottom:12px"></div>
+    <button class="btn-primary" onclick="trocarSenha()">Salvar nova senha</button>
   </div>
 </div>
 
@@ -872,6 +906,12 @@
     <div id="lista-cats" style="margin-top:14px"></div>
   </div>
 
+  <div class="form-card" style="border: 1px solid #4f8ef730;">
+    <h3 style="color:var(--accent)">🔐 Senha de Acesso</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Troque a senha que você passa para outras pessoas. Precisa da senha master para confirmar.</p>
+    <button onclick="abrirModalSenha()" class="btn-primary" style="background:var(--accent)">🔑 Trocar senha de acesso</button>
+  </div>
+
   <div class="form-card" style="border: 1px solid #f75f4f30;">
     <h3 style="color:var(--danger)">⚠️ Dados</h3>
     <button onclick="exportarCSV()" class="btn-primary" style="background:var(--surface2);margin-bottom:10px">📥 Exportar CSV</button>
@@ -931,12 +971,17 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SENHA_CORRETA = 'Claude249';
+const SENHA_MASTER = 'Claude249';
+const SENHA_PADRAO = 'Claude249';
+
+function getSenhaAcesso() {
+  return localStorage.getItem('mg_senha_acesso') || SENHA_PADRAO;
+}
 
 function verificarSenha() {
   const input = document.getElementById('senha-input');
   const erro = document.getElementById('senha-erro');
-  if (input.value === SENHA_CORRETA) {
+  if (input.value === getSenhaAcesso()) {
     document.getElementById('tela-senha').classList.add('hide');
   } else {
     input.classList.add('erro');
@@ -948,6 +993,48 @@ function verificarSenha() {
 
 function checarSenha() {
   document.getElementById('tela-senha').classList.remove('hide');
+}
+
+function abrirModalSenha() {
+  document.getElementById('modal-trocar-senha').classList.add('open');
+  document.getElementById('input-master').value = '';
+  document.getElementById('input-nova-senha').value = '';
+  document.getElementById('input-confirmar-senha').value = '';
+  document.getElementById('erro-trocar-senha').textContent = '';
+  document.getElementById('erro-trocar-senha').classList.remove('show');
+}
+
+function fecharModalSenha(e) {
+  if (e.target.id === 'modal-trocar-senha') {
+    document.getElementById('modal-trocar-senha').classList.remove('open');
+  }
+}
+
+function trocarSenha() {
+  const master = document.getElementById('input-master').value;
+  const nova = document.getElementById('input-nova-senha').value.trim();
+  const confirmar = document.getElementById('input-confirmar-senha').value.trim();
+  const erro = document.getElementById('erro-trocar-senha');
+
+  if (master !== SENHA_MASTER) {
+    erro.textContent = 'Senha master incorreta!';
+    erro.classList.add('show');
+    return;
+  }
+  if (!nova || nova.length < 4) {
+    erro.textContent = 'A nova senha deve ter pelo menos 4 caracteres!';
+    erro.classList.add('show');
+    return;
+  }
+  if (nova !== confirmar) {
+    erro.textContent = 'As senhas não coincidem!';
+    erro.classList.add('show');
+    return;
+  }
+
+  localStorage.setItem('mg_senha_acesso', nova);
+  document.getElementById('modal-trocar-senha').classList.remove('open');
+  toast('✅ Senha de acesso alterada! Quem tinha a senha antiga não consegue mais entrar.');
 }
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
