@@ -839,6 +839,7 @@
   <button class="tab" onclick="trocarAba('fixas', this)">📌 Fixas</button>
   <button class="tab" onclick="trocarAba('relatorio', this)">📊 Relatório</button>
   <button class="tab" onclick="trocarAba('config', this)">⚙️ Config</button>
+  <button class="tab" onclick="abrirAdmin()">🔧 Admin</button>
 </div>
 
 <!-- ABA: LANÇAMENTOS -->
@@ -906,16 +907,37 @@
     <div id="lista-cats" style="margin-top:14px"></div>
   </div>
 
-  <div class="form-card" style="border: 1px solid #4f8ef730;">
+  <div class="form-card">
+    <h3>📥 Exportar</h3>
+    <button onclick="exportarCSV()" class="btn-primary" style="background:var(--surface2)">📥 Exportar CSV</button>
+  </div>
+</div>
+
+<!-- ABA: ADMIN -->
+<div class="section" id="aba-admin">
+  <div class="form-card" style="border:1px solid #4f8ef730">
     <h3 style="color:var(--accent)">🔐 Senha de Acesso</h3>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Troque a senha que você passa para outras pessoas. Precisa da senha master para confirmar.</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Troque a senha que você passa para outras pessoas.</p>
     <button onclick="abrirModalSenha()" class="btn-primary" style="background:var(--accent)">🔑 Trocar senha de acesso</button>
   </div>
 
-  <div class="form-card" style="border: 1px solid #f75f4f30;">
+  <div class="form-card" style="border:1px solid #f75f4f30">
     <h3 style="color:var(--danger)">⚠️ Dados</h3>
-    <button onclick="exportarCSV()" class="btn-primary" style="background:var(--surface2);margin-bottom:10px">📥 Exportar CSV</button>
     <button onclick="limparDados()" class="btn-primary" style="background:#f75f4f20;color:var(--danger);border:1px solid var(--danger)">🗑️ Limpar todos os dados</button>
+  </div>
+</div>
+
+<!-- MODAL SENHA ADMIN -->
+<div class="modal-overlay" id="modal-admin" onclick="fecharModalAdmin(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🔧 Acesso Admin</h2>
+    <div class="senha-sub" style="margin-bottom:16px;color:var(--muted);font-size:13px">Digite a senha master para continuar</div>
+    <div class="form-row">
+      <input type="password" id="input-admin-senha" placeholder="Senha master" class="senha-input" style="margin-bottom:8px" onkeydown="if(event.key==='Enter') confirmarAdmin()">
+    </div>
+    <div class="senha-erro" id="erro-admin"></div>
+    <button class="btn-primary" onclick="confirmarAdmin()">Entrar</button>
   </div>
 </div>
 
@@ -993,6 +1015,38 @@ function verificarSenha() {
 
 function checarSenha() {
   document.getElementById('tela-senha').classList.remove('hide');
+}
+
+function abrirAdmin() {
+  document.getElementById('modal-admin').classList.add('open');
+  document.getElementById('input-admin-senha').value = '';
+  document.getElementById('erro-admin').textContent = '';
+  document.getElementById('erro-admin').classList.remove('show');
+  setTimeout(() => document.getElementById('input-admin-senha').focus(), 100);
+}
+
+function fecharModalAdmin(e) {
+  if (e.target.id === 'modal-admin') {
+    document.getElementById('modal-admin').classList.remove('open');
+  }
+}
+
+function confirmarAdmin() {
+  const senha = document.getElementById('input-admin-senha').value;
+  const erro = document.getElementById('erro-admin');
+  if (senha === SENHA_MASTER) {
+    document.getElementById('modal-admin').classList.remove('open');
+    // Ativa aba admin
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('ativo'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('ativo'));
+    document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('ativo'));
+    document.getElementById('aba-admin').classList.add('ativo');
+  } else {
+    erro.textContent = 'Senha master incorreta!';
+    erro.classList.add('show');
+    document.getElementById('input-admin-senha').value = '';
+    setTimeout(() => { erro.classList.remove('show'); }, 2000);
+  }
 }
 
 function abrirModalSenha() {
