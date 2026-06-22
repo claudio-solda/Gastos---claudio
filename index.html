@@ -530,6 +530,157 @@
     pointer-events: none;
   }
 
+  /* TEMA CLARO */
+  body.tema-claro {
+    --bg: #f0f4ff;
+    --surface: #ffffff;
+    --surface2: #e8edf8;
+    --text: #1a2340;
+    --muted: #7a8ab0;
+  }
+
+  /* BOTÃO TEMA */
+  .btn-tema {
+    background: var(--surface2);
+    border: none;
+    color: var(--text);
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  /* CARDS RESUMO RELATÓRIO */
+  .rel-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .rel-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+  }
+  .rel-card .rc-valor {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .rel-card .rc-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* GRÁFICO */
+  .grafico-container {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .grafico-title {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .grafico-barras {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 120px;
+    padding-bottom: 24px;
+    position: relative;
+  }
+  .barra-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    position: relative;
+  }
+  .barra {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    transition: height 0.4s ease;
+    min-height: 4px;
+    position: relative;
+  }
+  .barra-label {
+    font-size: 9px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    position: absolute;
+    bottom: -20px;
+    left: 0; right: 0;
+  }
+
+  /* COMPARATIVO */
+  .comparativo {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .comp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #ffffff08;
+    font-size: 13px;
+  }
+  .comp-row:last-child { border-bottom: none; }
+  .comp-label { color: var(--muted); }
+  .comp-vals { display: flex; gap: 12px; }
+  .comp-ant { color: var(--muted); font-size: 12px; }
+  .comp-atual { font-weight: 700; font-family: var(--font-display); }
+  .comp-delta {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .comp-delta.up { background: #f75f4f20; color: var(--danger); }
+  .comp-delta.down { background: #4ff79e20; color: var(--success); }
+  .comp-delta.neutro { background: var(--surface2); color: var(--muted); }
+
+  /* RESUMO FIXAS */
+  .fixas-resumo {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .fixas-resumo-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .fr-item { text-align: center; flex: 1; }
+  .fr-val {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .fr-label { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+
   /* TELA DE SENHA */
   #tela-senha {
     position: fixed;
@@ -609,7 +760,10 @@
 <header>
   <div class="header-top">
     <div class="logo">Meus<span>Gastos</span></div>
-    <div style="font-size:12px;color:var(--muted)" id="total-count"></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="font-size:12px;color:var(--muted)" id="total-count"></div>
+      <button class="btn-tema" onclick="toggleTema()" id="btn-tema" title="Alternar tema">🌙</button>
+    </div>
   </div>
   <div class="mes-nav">
     <button onclick="mudarMes(-1)">‹</button>
@@ -928,28 +1082,152 @@ function render() {
   const totalGasto = Object.values(catGastos).reduce((s,v) => s+v, 0);
   const sorted = Object.entries(catGastos).sort((a,b) => b[1]-a[1]);
 
-  if (sorted.length === 0) {
-    relContent.innerHTML = '<div class="vazio"><div class="emoji">📊</div>Sem gastos registrados neste mês.</div>';
-  } else {
-    relContent.innerHTML = `
-      <div class="lista-title" style="margin-bottom:12px">Gastos por categoria</div>
-      ${sorted.map(([nome, val]) => {
-        const cat = state.categorias.find(c => c.nome === nome) || { emoji: '📦' };
-        const pct = totalGasto > 0 ? ((val/totalGasto)*100).toFixed(1) : 0;
-        return `
-          <div class="cat-item">
-            <div class="cat-header">
-              <div class="cat-nome">${cat.emoji} ${nome}</div>
-              <div>
-                <span class="cat-valor">${fmt(val)}</span>
-                <span class="cat-pct"> ${pct}%</span>
-              </div>
-            </div>
-            <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+  // Mês anterior
+  let mesAnt = state.mesAtual - 1, anoAnt = state.anoAtual;
+  if (mesAnt < 0) { mesAnt = 11; anoAnt--; }
+  const itensAnt = state.lancamentos.filter(l => {
+    const d = new Date(l.data + 'T00:00:00');
+    let mesFimA = mesAnt + 1, anoFimA = anoAnt;
+    if (mesFimA > 11) { mesFimA = 0; anoFimA++; }
+    const inicio = new Date(anoAnt, mesAnt, 20);
+    const fim = new Date(anoFimA, mesFimA, 5);
+    return d >= inicio && d <= fim;
+  });
+  const gastosAnt = itensAnt.filter(l => l.tipo === 'gasto').reduce((s,l) => s+l.valor, 0);
+  const receitasAnt = itensAnt.filter(l => l.tipo === 'receita').reduce((s,l) => s+l.valor, 0);
+
+  // Resumo fixas do mês
+  const fixasMes = state.contasFixas.filter(f => {
+    if (f.parcelas && f.mesInicio) {
+      const [ai, mi] = f.mesInicio.split('-').map(Number);
+      const diff = (state.anoAtual - ai) * 12 + (state.mesAtual - (mi - 1));
+      return diff >= 0 && diff < f.parcelas;
+    }
+    return true;
+  });
+  const fixasPagas = fixasMes.filter(f => {
+    const lanc = state.lancamentos.find(l => {
+      if (l.fixaId !== f.id) return false;
+      const d = new Date(l.data + 'T00:00:00');
+      let mesFim2 = state.mesAtual + 1, anoFim2 = state.anoAtual;
+      if (mesFim2 > 11) { mesFim2 = 0; anoFim2++; }
+      return d >= new Date(state.anoAtual, state.mesAtual, 20) && d <= new Date(anoFim2, mesFim2, 5);
+    });
+    return lanc && lanc.pago;
+  }).length;
+  const fixasAVencer = fixasMes.length - fixasPagas;
+  const totalFixas = fixasMes.reduce((s,f) => s+f.valor, 0);
+
+  // Monta HTML do relatório
+  const deltaGasto = gastos - gastosAnt;
+  const deltaReceita = receitas - receitasAnt;
+  const corDeltaGasto = deltaGasto > 0 ? 'up' : deltaGasto < 0 ? 'down' : 'neutro';
+  const corDeltaReceita = deltaReceita > 0 ? 'down' : deltaReceita < 0 ? 'up' : 'neutro';
+  const sinalGasto = deltaGasto > 0 ? '+' : '';
+  const sinalReceita = deltaReceita > 0 ? '+' : '';
+
+  // Gráfico de barras (top 6 categorias)
+  const top6 = sorted.slice(0, 6);
+  const maxVal = top6.length > 0 ? Math.max(...top6.map(([,v]) => v)) : 1;
+  const cores = ['#4f8ef7','#f7c94f','#4ff79e','#f75f4f','#a78bfa','#fb923c'];
+
+  relContent.innerHTML = `
+    <!-- CARDS RESUMO -->
+    <div class="rel-cards">
+      <div class="rel-card">
+        <div class="rc-valor" style="color:var(--danger)">${fmt(gastos)}</div>
+        <div class="rc-label">Gastos do mês</div>
+      </div>
+      <div class="rel-card">
+        <div class="rc-valor" style="color:var(--success)">${fmt(receitas)}</div>
+        <div class="rc-label">Receitas do mês</div>
+      </div>
+    </div>
+
+    <!-- RESUMO FIXAS -->
+    ${fixasMes.length > 0 ? `
+    <div class="fixas-resumo">
+      <div class="grafico-title">📌 Contas Fixas do Mês</div>
+      <div class="fixas-resumo-row">
+        <div class="fr-item">
+          <div class="fr-val" style="color:var(--success)">${fixasPagas}</div>
+          <div class="fr-label">✅ Pagas</div>
+        </div>
+        <div class="fr-item">
+          <div class="fr-val" style="color:var(--accent2)">${fixasAVencer}</div>
+          <div class="fr-label">⏳ A Vencer</div>
+        </div>
+        <div class="fr-item">
+          <div class="fr-val" style="color:var(--danger)">${fmt(totalFixas)}</div>
+          <div class="fr-label">💰 Total</div>
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- COMPARATIVO -->
+    <div class="comparativo">
+      <div class="grafico-title">📈 Comparativo com mês anterior</div>
+      <div class="comp-row">
+        <span class="comp-label">Gastos</span>
+        <div class="comp-vals">
+          <span class="comp-ant">${fmt(gastosAnt)}</span>
+          <span class="comp-atual" style="color:var(--danger)">${fmt(gastos)}</span>
+          <span class="comp-delta ${corDeltaGasto}">${sinalGasto}${fmt(deltaGasto)}</span>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Receitas</span>
+        <div class="comp-vals">
+          <span class="comp-ant">${fmt(receitasAnt)}</span>
+          <span class="comp-atual" style="color:var(--success)">${fmt(receitas)}</span>
+          <span class="comp-delta ${corDeltaReceita}">${sinalReceita}${fmt(deltaReceita)}</span>
+        </div>
+      </div>
+      <div class="comp-row">
+        <span class="comp-label">Saldo</span>
+        <div class="comp-vals">
+          <span class="comp-ant">${fmt(receitasAnt - gastosAnt)}</span>
+          <span class="comp-atual" style="color:var(--accent2)">${fmt(saldo)}</span>
+          <span class="comp-delta ${saldo > (receitasAnt-gastosAnt) ? 'down' : saldo < (receitasAnt-gastosAnt) ? 'up' : 'neutro'}">${saldo > (receitasAnt-gastosAnt) ? '+' : ''}${fmt(saldo - (receitasAnt-gastosAnt))}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRÁFICO -->
+    ${top6.length > 0 ? `
+    <div class="grafico-container">
+      <div class="grafico-title">📊 Gastos por categoria</div>
+      <div class="grafico-barras">
+        ${top6.map(([nome, val], i) => {
+          const altura = maxVal > 0 ? Math.max((val/maxVal)*100, 5) : 5;
+          const cat = state.categorias.find(c => c.nome === nome) || { emoji: '📦' };
+          return `<div class="barra-wrap">
+            <div class="barra" style="height:${altura}%;background:${cores[i % cores.length]}"></div>
+            <div class="barra-label">${cat.emoji} ${nome.substring(0,6)}</div>
           </div>`;
-      }).join('')}
-    `;
-  }
+        }).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- LISTA POR CATEGORIA -->
+    ${sorted.length > 0 ? `
+    <div class="lista-title" style="margin-bottom:12px">Detalhes por categoria</div>
+    ${sorted.map(([nome, val]) => {
+      const cat = state.categorias.find(c => c.nome === nome) || { emoji: '📦' };
+      const pct = totalGasto > 0 ? ((val/totalGasto)*100).toFixed(1) : 0;
+      return `
+        <div class="cat-item">
+          <div class="cat-header">
+            <div class="cat-nome">${cat.emoji} ${nome}</div>
+            <div>
+              <span class="cat-valor">${fmt(val)}</span>
+              <span class="cat-pct"> ${pct}%</span>
+            </div>
+          </div>
+          <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join('')}` : '<div class="vazio"><div class="emoji">📊</div>Sem gastos registrados neste mês.</div>'}
+  `;
 
   // =============================================
   // Lista fixas COM badge A VENCER / PAGO
@@ -1288,7 +1566,31 @@ setTimeout(() => {
   setTimeout(() => splash.remove(), 800);
 }, 2500);
 
+function toggleTema() {
+  const body = document.body;
+  const btn = document.getElementById('btn-tema');
+  if (body.classList.contains('tema-claro')) {
+    body.classList.remove('tema-claro');
+    btn.textContent = '🌙';
+    localStorage.setItem('mg_tema', 'escuro');
+  } else {
+    body.classList.add('tema-claro');
+    btn.textContent = '☀️';
+    localStorage.setItem('mg_tema', 'claro');
+  }
+}
+
+function aplicarTema() {
+  const tema = localStorage.getItem('mg_tema');
+  const btn = document.getElementById('btn-tema');
+  if (tema === 'claro') {
+    document.body.classList.add('tema-claro');
+    if (btn) btn.textContent = '☀️';
+  }
+}
+
 carregar();
+aplicarTema();
 checarSenha();
 gerarContasFixasMes();
 render();
