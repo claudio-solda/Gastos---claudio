@@ -1035,6 +1035,39 @@
   </div>
 </div>
 
+<!-- MODAL EDITAR LANÇAMENTO -->
+<div class="modal-overlay" id="modal-editar" onclick="fecharModalEditarFora(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>✏️ Editar Lançamento</h2>
+
+    <div class="tipo-toggle">
+      <button class="tipo-btn ativo-gasto" id="edit-btn-gasto" onclick="setTipoEditar('gasto')">📤 Gasto</button>
+      <button class="tipo-btn" id="edit-btn-receita" onclick="setTipoEditar('receita')">📥 Receita</button>
+    </div>
+
+    <input type="hidden" id="edit-id">
+    <div class="form-row">
+      <label>Descrição</label>
+      <input type="text" id="edit-desc" placeholder="Ex: Mercado">
+    </div>
+    <div class="form-row">
+      <label>Valor (R$)</label>
+      <input type="number" id="edit-valor" placeholder="0,00" inputmode="decimal">
+    </div>
+    <div class="form-row">
+      <label>Categoria</label>
+      <select id="edit-cat"></select>
+    </div>
+    <div class="form-row">
+      <label>Data</label>
+      <input type="date" id="edit-data">
+    </div>
+
+    <button class="btn-primary" onclick="salvarEdicao()">💾 Salvar alterações</button>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1255,6 +1288,7 @@ function render() {
           </div>
           ${pagoBadge}
           <div class="lanc-valor ${l.tipo}">${l.tipo === 'receita' ? '+' : '-'}${fmt(l.valor)}</div>
+          <button class="lanc-del" onclick="editarLancamento('${l.id}')" style="color:var(--accent);margin-right:2px">✏️</button>
           <button class="lanc-del" onclick="excluir('${l.id}')">✕</button>
         </div>`;
     }).join('');
@@ -1590,6 +1624,65 @@ function salvarLancamento() {
   fecharModal();
   render();
   toast(state.tipoForm === 'gasto' ? '💸 Gasto registrado!' : '💰 Receita registrada!');
+}
+
+function editarLancamento(id) {
+  const l = state.lancamentos.find(l => l.id === id);
+  if (!l) return;
+
+  document.getElementById('edit-id').value = id;
+  document.getElementById('edit-desc').value = l.descricao;
+  document.getElementById('edit-valor').value = l.valor;
+  document.getElementById('edit-data').value = l.data;
+
+  // Preenche select de categorias
+  const sel = document.getElementById('edit-cat');
+  sel.innerHTML = state.categorias.map(c => `<option value="${c.nome}">${c.emoji} ${c.nome}</option>`).join('');
+  sel.value = l.categoria;
+
+  // Define tipo
+  setTipoEditar(l.tipo);
+
+  document.getElementById('modal-editar').classList.add('open');
+}
+
+function fecharModalEditarFora(e) {
+  if (e.target.id === 'modal-editar') {
+    document.getElementById('modal-editar').classList.remove('open');
+  }
+}
+
+function setTipoEditar(tipo) {
+  document.getElementById('edit-id').dataset.tipo = tipo;
+  document.getElementById('edit-btn-gasto').className = 'tipo-btn' + (tipo === 'gasto' ? ' ativo-gasto' : '');
+  document.getElementById('edit-btn-receita').className = 'tipo-btn' + (tipo === 'receita' ? ' ativo-receita' : '');
+}
+
+function salvarEdicao() {
+  const id = document.getElementById('edit-id').value;
+  const desc = document.getElementById('edit-desc').value.trim();
+  const valor = parseFloat(document.getElementById('edit-valor').value);
+  const cat = document.getElementById('edit-cat').value;
+  const data = document.getElementById('edit-data').value;
+  const tipo = document.getElementById('edit-id').dataset.tipo || 'gasto';
+
+  if (!desc) { toast('Digite a descrição'); return; }
+  if (!valor || valor <= 0) { toast('Digite um valor válido'); return; }
+  if (!data) { toast('Selecione a data'); return; }
+
+  const lanc = state.lancamentos.find(l => l.id === id);
+  if (lanc) {
+    lanc.descricao = desc;
+    lanc.valor = valor;
+    lanc.categoria = cat;
+    lanc.data = data;
+    lanc.tipo = tipo;
+  }
+
+  salvar();
+  document.getElementById('modal-editar').classList.remove('open');
+  render();
+  toast('✅ Lançamento atualizado!');
 }
 
 function togglePago(id) {
