@@ -577,6 +577,37 @@
     letter-spacing: 0.5px;
   }
 
+  /* AJUDA */
+  .ajuda-item {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+  .ajuda-titulo {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ajuda-texto {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .ajuda-texto li {
+    margin-bottom: 4px;
+    margin-left: 16px;
+  }
+  .ajuda-versao {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 16px 0;
+  }
+
   /* PIZZA */
   .pizza-container {
     background: var(--surface);
@@ -886,6 +917,7 @@
   <button class="tab" onclick="trocarAba('relatorio', this)">📊 Relatório</button>
   <button class="tab" onclick="trocarAba('config', this)">⚙️ Config</button>
   <button class="tab" onclick="abrirAdmin()">🔧 Admin</button>
+  <button class="tab" onclick="trocarAba('ajuda', this)">❓ Ajuda</button>
 </div>
 
 <!-- ABA: LANÇAMENTOS -->
@@ -956,6 +988,108 @@
   <div class="form-card">
     <h3>📥 Exportar</h3>
     <button onclick="exportarCSV()" class="btn-primary" style="background:var(--surface2)">📥 Exportar CSV</button>
+  </div>
+</div>
+
+<!-- ABA: AJUDA -->
+<div class="section" id="aba-ajuda">
+  <div class="lista-title" style="margin-bottom:12px">Como usar o app</div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">💰 Lançar gasto ou receita</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Toque no botão <strong>+</strong> no canto inferior direito</li>
+        <li>Escolha <strong>Gasto</strong> ou <strong>Receita</strong></li>
+        <li>Preencha descrição, valor, categoria e data</li>
+        <li>Toque em <strong>Salvar lançamento</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">✏️ Editar um lançamento</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Na aba <strong>Lançamentos</strong> localize o item</li>
+        <li>Toque no ícone <strong>✏️</strong> ao lado do lançamento</li>
+        <li>Altere o que precisar e toque em <strong>Salvar alterações</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">✅ Marcar como pago</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Em cada gasto aparece o botão <strong>⏳ Pendente</strong></li>
+        <li>Toque nele para marcar como <strong>✅ Pago</strong></li>
+        <li>O lançamento ficará com linha riscada</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">📌 Cadastrar conta fixa</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Vá na aba <strong>Fixas</strong></li>
+        <li>Preencha descrição, valor, categoria e dia de vencimento</li>
+        <li>Se for parcelado, informe o número de parcelas e o mês de início</li>
+        <li>O app lança automaticamente todo mês</li>
+        <li>Quando terminar as parcelas some automaticamente</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">📊 Ver relatório</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Toque em <strong>📊 Relatório</strong> na barra inferior</li>
+        <li>Veja o resumo de gastos e receitas do mês</li>
+        <li>Veja o status das contas fixas (pagas x a vencer)</li>
+        <li>Compare com o mês anterior</li>
+        <li>Veja os gráficos de pizza e barras por categoria</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">🌙 Mudar tema claro/escuro</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Toque no ícone <strong>🌙</strong> no canto superior direito</li>
+        <li>O app alterna entre tema escuro e claro</li>
+        <li>A preferência é salva automaticamente</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item">
+    <div class="ajuda-titulo">⚙️ Configurações</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Defina seu <strong>orçamento mensal</strong></li>
+        <li>Adicione <strong>categorias personalizadas</strong></li>
+        <li>Exporte seus dados em <strong>CSV</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-item" style="border:1px solid #4f8ef730">
+    <div class="ajuda-titulo" style="color:var(--accent)">🔧 Área Admin (só desenvolvedor)</div>
+    <div class="ajuda-texto">
+      <ul>
+        <li>Toque em <strong>🔧 Admin</strong> e digite a senha master</li>
+        <li>Troque a senha de acesso para controlar quem usa o app</li>
+        <li>Quem tinha a senha antiga não consegue mais entrar</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ajuda-versao">
+    MeusGastos v2.0 • Desenvolvido por Claudio 💙
   </div>
 </div>
 
