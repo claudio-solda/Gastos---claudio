@@ -577,6 +577,45 @@
     letter-spacing: 0.5px;
   }
 
+  /* BUSCA */
+  .busca-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .busca-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    padding: 11px 13px 11px 38px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .busca-input:focus { border-color: var(--accent); }
+  .busca-icone {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+  }
+  .busca-limpar {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px;
+  }
+
   /* AJUDA */
   .ajuda-item {
     background: var(--surface);
@@ -922,7 +961,12 @@
 
 <!-- ABA: LANÇAMENTOS -->
 <div class="section ativo" id="aba-lancamentos">
-  <div class="lista-title">Histórico do mês</div>
+  <div class="busca-wrap">
+    <span class="busca-icone">🔍</span>
+    <input type="text" class="busca-input" id="busca-input" placeholder="Buscar lançamento..." oninput="filtrarLancamentos()">
+    <button class="busca-limpar" onclick="limparBusca()" id="busca-limpar" style="display:none">✕</button>
+  </div>
+  <div class="lista-title" id="busca-titulo">Histórico do mês</div>
   <div id="lista-lancamentos"></div>
 </div>
 
@@ -1817,6 +1861,61 @@ function salvarEdicao() {
   document.getElementById('modal-editar').classList.remove('open');
   render();
   toast('✅ Lançamento atualizado!');
+}
+
+function filtrarLancamentos() {
+  const termo = document.getElementById('busca-input').value.toLowerCase().trim();
+  const btnLimpar = document.getElementById('busca-limpar');
+  const titulo = document.getElementById('busca-titulo');
+  btnLimpar.style.display = termo ? 'block' : 'none';
+
+  const itens = lancamentosMes();
+  const filtrados = termo
+    ? itens.filter(l =>
+        l.descricao.toLowerCase().includes(termo) ||
+        l.categoria.toLowerCase().includes(termo)
+      )
+    : itens;
+
+  titulo.textContent = termo
+    ? `${filtrados.length} resultado(s) para "${termo}"`
+    : 'Histórico do mês';
+
+  const lista = document.getElementById('lista-lancamentos');
+  const ordenados = [...filtrados].sort((a,b) => new Date(b.data) - new Date(a.data));
+
+  if (ordenados.length === 0) {
+    lista.innerHTML = '<div class="vazio"><div class="emoji">🔍</div>Nenhum lançamento encontrado.</div>';
+    return;
+  }
+
+  lista.innerHTML = ordenados.map(l => {
+    const cat = state.categorias.find(c => c.nome === l.categoria) || { emoji: '📦' };
+    const corBg = l.tipo === 'receita' ? '#4ff79e20' : '#f75f4f20';
+    const dataFmt = new Date(l.data + 'T00:00:00').toLocaleDateString('pt-BR');
+    const pagoBadge = l.tipo === 'gasto'
+      ? `<button onclick="togglePago('${l.id}')" class="badge-status ${l.pago ? 'pago' : 'pendente'}">${l.pago ? '✅ Pago' : '⏳ Pendente'}</button>`
+      : '';
+    return `
+      <div class="lancamento-item" style="${l.pago ? 'opacity:0.75' : ''}">
+        <div class="lanc-icone" style="background:${corBg}">${cat.emoji}</div>
+        <div class="lanc-info">
+          <div class="lanc-desc" style="${l.pago ? 'text-decoration:line-through' : ''}">${l.descricao}</div>
+          <div class="lanc-meta">${l.categoria} • ${dataFmt}</div>
+        </div>
+        ${pagoBadge}
+        <div class="lanc-valor ${l.tipo}">${l.tipo === 'receita' ? '+' : '-'}${fmt(l.valor)}</div>
+        <button class="lanc-del" onclick="editarLancamento('${l.id}')" style="color:var(--accent);margin-right:2px">✏️</button>
+        <button class="lanc-del" onclick="excluir('${l.id}')">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function limparBusca() {
+  document.getElementById('busca-input').value = '';
+  document.getElementById('busca-limpar').style.display = 'none';
+  document.getElementById('busca-titulo').textContent = 'Histórico do mês';
+  render();
 }
 
 function togglePago(id) {
